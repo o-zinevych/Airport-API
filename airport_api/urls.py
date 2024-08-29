@@ -24,5 +24,9 @@ urlpatterns = [
         "api/v1/fleet/",
         include("fleet.urls", namespace="fleet")
     ),
+    path(
+        "api/v1/flight-ops/",
+        include("flight_ops.urls", namespace="flight-ops")
+    ),
     path("api/v1/location/", include("location.urls", namespace="location"))
 ] + debug_toolbar_urls()
