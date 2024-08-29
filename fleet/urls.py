@@ -12,4 +12,4 @@ router.register(
 
 urlpatterns = [path("", include(router.urls))]
 
-app_name = "airplanes"
+app_name = "fleet"

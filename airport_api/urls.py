@@ -21,8 +21,8 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
-        "api/v1/airplanes/",
-        include("airplanes.urls", namespace="airplanes")
+        "api/v1/fleet/",
+        include("fleet.urls", namespace="fleet")
     ),
     path("api/v1/location/", include("location.urls", namespace="location"))
 ] + debug_toolbar_urls()
