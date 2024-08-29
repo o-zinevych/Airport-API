@@ -6,7 +6,7 @@ class AirplaneType(models.Model):
 
     class Meta:
         ordering = ["name"]
-        db_table = "airplanes_airplane_type"
+        db_table = "fleet_airplane_type"
 
     def __str__(self):
         return self.name
