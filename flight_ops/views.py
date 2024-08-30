@@ -1,11 +1,17 @@
 from rest_framework import viewsets
 
-from .models import Route
+from .models import Crew, Route
 from .serializers import (
     RouteSerializer,
     RouteListSerializer,
-    RouteDetailSerializer
+    RouteDetailSerializer,
+    CrewSerializer
 )
+
+
+class CrewViewSet(viewsets.ModelViewSet):
+    queryset = Crew.objects.prefetch_related("flights")
+    serializer_class = CrewSerializer
 
 
 class RouteViewSet(viewsets.ModelViewSet):

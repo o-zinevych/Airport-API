@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from .models import Route
+from .models import Crew, Route
+
+
+class CrewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Crew
+        fields = ("id", "first_name", "last_name")
 
 
 class RouteSerializer(serializers.ModelSerializer):
