@@ -40,11 +40,32 @@ class RouteViewSet(viewsets.ModelViewSet):
 
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = Flight.objects.select_related("route", "airplane")
+    queryset = Flight.objects.select_related(
+        "route",
+        "route__source",
+        "route__destination"
+    )
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == "retrieve":
+            queryset = queryset.select_related(
+                "route__source__closest_big_city",
+                "route__destination__closest_big_city",
+                "airplane",
+                "airplane__airplane_type"
+            ).prefetch_related(
+                "route__source__closest_big_city__country",
+                "route__destination__closest_big_city__country",
+                "crew"
+            )
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
             return FlightListSerializer
         if self.action == "retrieve":
             return FlightDetailSerializer
+
         return FlightSerializer
