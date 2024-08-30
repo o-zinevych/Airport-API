@@ -73,3 +73,30 @@ class FlightListSerializer(serializers.ModelSerializer):
             "departure_time",
             "arrival_time"
         )
+
+
+class FlightDetailSerializer(serializers.ModelSerializer):
+    route = serializers.StringRelatedField(read_only=True)
+    airplane = serializers.StringRelatedField(read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Flight
+        fields = (
+            "id",
+            "number",
+            "route",
+            "airplane",
+            "departure_time",
+            "arrival_time",
+            "crew"
+        )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get("request")
+
+        if request and not request.user.is_staff:
+            representation.pop("crew")
+
+        return representation

@@ -7,7 +7,8 @@ from .serializers import (
     RouteDetailSerializer,
     CrewSerializer,
     FlightSerializer,
-    FlightListSerializer
+    FlightListSerializer,
+    FlightDetailSerializer
 )
 
 
@@ -44,4 +45,6 @@ class FlightViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return FlightListSerializer
+        if self.action == "retrieve":
+            return FlightDetailSerializer
         return FlightSerializer
