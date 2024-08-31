@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "fleet",
     "flight_ops",
     "location",
+    "user",
 ]
 
 MIDDLEWARE = [
