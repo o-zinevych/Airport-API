@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
+from rest_framework.permissions import IsAdminUser
 
 from .models import Crew, Route, Flight
 from .serializers import (
@@ -15,6 +16,7 @@ from .serializers import (
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.prefetch_related("flights")
     serializer_class = CrewSerializer
+    permission_classes = (IsAdminUser,)
 
 
 class RouteViewSet(viewsets.ModelViewSet):
@@ -39,7 +41,13 @@ class RouteViewSet(viewsets.ModelViewSet):
         return RouteSerializer
 
 
-class FlightViewSet(viewsets.ModelViewSet):
+class FlightViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin
+):
     queryset = Flight.objects.select_related(
         "route",
         "route__source",
