@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 class UserManager(DjangoUserManager):
     """User manager adapted for email instead of username."""
 
-    def _create_user(self, username, email, password, **extra_fields):
+    def _create_user(self, email, password, **extra_fields):
         """
         Create and save a user with the given email and password.
         """
