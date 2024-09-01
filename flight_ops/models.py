@@ -65,7 +65,7 @@ class Flight(models.Model):
     number = models.CharField(max_length=60)
     route = models.ForeignKey(
         Route,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="flights"
     )
     airplane = models.ForeignKey(
