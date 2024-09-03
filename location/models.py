@@ -1,4 +1,8 @@
+import uuid
+from pathlib import Path
+
 from django.db import models
+from django.utils.text import slugify
 
 
 class Country(models.Model):
@@ -28,6 +32,11 @@ class City(models.Model):
         return f"{self.name} ({self.country.name})"
 
 
+def airport_image_file_path(instance, filename):
+    name = f"{slugify(instance.name)}-{uuid.uuid4()}" + Path(filename).suffix
+    return Path("upload/airports/") / Path(name)
+
+
 class Airport(models.Model):
     name = models.CharField(max_length=255)
     closest_big_city = models.ForeignKey(
@@ -35,6 +44,7 @@ class Airport(models.Model):
         related_name="airports",
         on_delete=models.CASCADE
     )
+    image = models.ImageField(null=True, upload_to=airport_image_file_path)
 
     class Meta:
         ordering = ["name"]
