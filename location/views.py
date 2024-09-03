@@ -1,4 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
 
 from .models import Country, City, Airport
 from .serializers import (
@@ -6,7 +9,8 @@ from .serializers import (
     CitySerializer,
     CityListSerializer,
     AirportSerializer,
-    AirportListSerializer
+    AirportListSerializer,
+    AirportImageSerializer,
 )
 
 
@@ -33,4 +37,20 @@ class AirportViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):
             return AirportListSerializer
+        if self.action == "upload_image":
+            return AirportImageSerializer
+
         return AirportSerializer
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="upload-image",
+        permission_classes=[IsAdminUser]
+    )
+    def upload_image(self, request, pk=None):
+        airport = self.get_object()
+        serializer = self.get_serializer(airport, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
