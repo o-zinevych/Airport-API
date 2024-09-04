@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import F, Count
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAdminUser
@@ -55,8 +57,37 @@ class FlightViewSet(
         "route__destination"
     )
 
+    @staticmethod
+    def _params_to_int(query_str):
+        return [int(str_id) for str_id in query_str.split(",")]
+
     def get_queryset(self):
+        """
+        Filter the list by certain parameters and annotate the queryset with
+        available seats count.
+        """
         queryset = self.queryset
+        source = self.request.query_params.get("source")
+        destination = self.request.query_params.get("destination")
+        departure_date = self.request.query_params.get("departure_date")
+        arrival_date = self.request.query_params.get("arrival_date")
+
+        if source:
+            source_ids = self._params_to_int(source)
+            queryset = queryset.filter(route__source_id__in=source_ids)
+        if destination:
+            destination_ids = self._params_to_int(destination)
+            queryset = queryset.filter(
+                route__destination_id__in=destination_ids
+            )
+
+        if departure_date:
+            dep_date = datetime.strptime(departure_date, "%Y-%m-%d").date()
+            queryset = queryset.filter(departure_time__date=dep_date)
+        if arrival_date:
+            arr_date = datetime.strptime(arrival_date, "%Y-%m-%d").date()
+            queryset = queryset.filter(arrival_time__date=arr_date)
+
         if self.action == "list":
             queryset = queryset.annotate(
                 seats_available=F("airplane__seats_in_row")
