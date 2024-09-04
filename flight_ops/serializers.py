@@ -62,6 +62,7 @@ class FlightListSerializer(serializers.ModelSerializer):
         slug_field="destination.name",
         source="route"
     )
+    seats_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Flight
@@ -71,7 +72,8 @@ class FlightListSerializer(serializers.ModelSerializer):
             "source",
             "destination",
             "departure_time",
-            "arrival_time"
+            "arrival_time",
+            "seats_available"
         )
 
 

@@ -1,3 +1,4 @@
+from django.db.models import F, Count
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAdminUser
 
@@ -56,6 +57,12 @@ class FlightViewSet(
 
     def get_queryset(self):
         queryset = self.queryset
+        if self.action == "list":
+            queryset = queryset.annotate(
+                seats_available=F("airplane__seats_in_row")
+                * F("airplane__rows") - Count("tickets")
+            )
+
         if self.action == "retrieve":
             queryset = queryset.select_related(
                 "route__source__closest_big_city",
