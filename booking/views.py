@@ -1,8 +1,14 @@
 from rest_framework import viewsets, mixins
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Order
 from .serializers import OrderSerializer, OrderListSerializer
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 3
+    max_page_size = 5
 
 
 class OrderViewSet(
@@ -11,6 +17,7 @@ class OrderViewSet(
     mixins.CreateModelMixin
 ):
     queryset = Order.objects.prefetch_related("tickets__flight")
+    pagination_class = OrderPagination
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
