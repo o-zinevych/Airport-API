@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import UniqueConstraint
+from rest_framework.exceptions import ValidationError
 
 from flight_ops.models import Flight
 
@@ -42,6 +43,42 @@ class Ticket(models.Model):
                 "Choose a free one.",
             )
         ]
+
+    @staticmethod
+    def validate_ticket(row, seat, airplane, error_to_raise):
+        print(str(airplane))
+        for ticket_attr_value, ticket_attr_name, airplane_attr_name in [
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row")
+        ]:
+            count_attrs = getattr(airplane, airplane_attr_name)
+            print(count_attrs)
+            if not 1 <= ticket_attr_value <= count_attrs:
+                raise error_to_raise(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} number must be "
+                                          f"in the available range: "
+                                          f"1 to {count_attrs}"
+                    }
+                )
+
+    def clean(self):
+        Ticket.validate_ticket(
+            self.row, self.seat, self.flight.airplane, ValidationError
+        )
+
+    def save(
+        self,
+        *args,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        return super().save(
+            force_insert, force_update, using, update_fields, *args
+        )
 
     def __str__(self):
         return (
