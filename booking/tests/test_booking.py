@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from booking.models import Order, get_deleted_user
+from booking.models import Order, get_deleted_user, Ticket
 from booking.serializers import OrderListSerializer, OrderSerializer
 from fleet.tests.test_fleet import sample_airplane_type, sample_airplane
 from flight_ops.tests.test_flight_ops import sample_flight, sample_route
@@ -41,6 +41,28 @@ class OrderModelTest(TestCase):
         self.user.delete()
         self.order.refresh_from_db()
         self.assertEqual(self.order.user, deleted_user)
+
+
+class TicketModelTest(TestCase):
+    def setUp(self):
+        country = sample_country()
+        city = sample_city(country=country)
+        source = sample_airport(closest_big_city=city)
+        destination = sample_airport(name="Gatwick", closest_big_city=city)
+        route = sample_route(source=source, destination=destination)
+        airplane_type = sample_airplane_type()
+        airplane = sample_airplane(airplane_type=airplane_type)
+        self.flight = sample_flight(route=route, airplane=airplane)
+
+    def test_ticket_str(self):
+        order = Order.objects.create(user=sample_user())
+        ticket = Ticket.objects.create(
+            row=1, seat=5, flight=self.flight, order=order
+        )
+        self.assertEqual(
+            f"Ticket for row 1, seat 5, flight {self.flight.number}",
+            str(ticket)
+        )
 
 
 class UnauthenticatedOrderAPITests(TestCase):
