@@ -13,7 +13,6 @@ class TicketSerializer(serializers.ModelSerializer):
             attrs["flight"].airplane,
             serializers.ValidationError
         )
-        print(data)
         return data
 
     class Meta:

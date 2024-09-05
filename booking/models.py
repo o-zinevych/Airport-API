@@ -46,13 +46,11 @@ class Ticket(models.Model):
 
     @staticmethod
     def validate_ticket(row, seat, airplane, error_to_raise):
-        print(str(airplane))
         for ticket_attr_value, ticket_attr_name, airplane_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row")
         ]:
             count_attrs = getattr(airplane, airplane_attr_name)
-            print(count_attrs)
             if not 1 <= ticket_attr_value <= count_attrs:
                 raise error_to_raise(
                     {
