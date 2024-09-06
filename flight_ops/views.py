@@ -18,7 +18,7 @@ from .serializers import (
 
 
 class CrewViewSet(viewsets.ModelViewSet):
-    queryset = Crew.objects.prefetch_related("flights")
+    queryset = Crew.objects.all()
     serializer_class = CrewSerializer
     permission_classes = (IsAdminUser,)
 
