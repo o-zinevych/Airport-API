@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from django.db import IntegrityError
+
 from fleet.tests.utils import sample_airplane_type, sample_airplane
 from flight_ops.models import Crew, Route, Flight
 from location.tests.utils import sample_country, sample_city, sample_airport
@@ -19,16 +21,18 @@ def sample_route(**params):
     """
     Create a sample route with source and destination airports samples.
     """
-
-    country = sample_country()
-    city = sample_city(country=country)
-    source = sample_airport(closest_big_city=city)
-    destination = sample_airport(name="Gatwick", closest_big_city=city)
-    defaults = {
-        "source": source,
-        "destination": destination,
-        "distance": 1150,
-    }
+    try:
+        country = sample_country()
+        city = sample_city(country=country)
+        source = sample_airport(closest_big_city=city)
+        destination = sample_airport(name="Gatwick", closest_big_city=city)
+        defaults = {
+            "source": source,
+            "destination": destination,
+            "distance": 1150,
+        }
+    except IntegrityError:
+        defaults = {}
     defaults.update(params)
 
     return Route.objects.create(**defaults)
