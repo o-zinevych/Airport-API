@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.db.models import F, Count
 from django.test import TestCase
@@ -14,7 +16,8 @@ from flight_ops.serializers import (
     RouteSerializer,
     FlightListSerializer,
 )
-from flight_ops.tests.utils import sample_crew, sample_route
+from flight_ops.tests.utils import sample_crew, sample_route, sample_flight
+from location.tests.utils import sample_country, sample_city, sample_airport
 
 CREW_URL = reverse("flight-ops:crew-list")
 ROUTE_URL = reverse("flight-ops:route-list")
@@ -185,3 +188,76 @@ class PublicFlightAPITests(TestCase):
         response = self.client.get(FLIGHT_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"], serializer.data)
+
+    def test_flight_list_source_and_destination_filter(self):
+        country = sample_country(name="USA")
+        los_angeles = sample_city(name="Los Angeles", country=country)
+        nyc = sample_city(name="New York City", country=country)
+        filter_source = sample_airport(name="JFK", closest_big_city=nyc)
+        filter_destination = sample_airport(
+            name="LAX", closest_big_city=los_angeles
+        )
+        filter_route = Route.objects.create(
+            source=filter_source,
+            destination=filter_destination,
+            distance=1000,
+        )
+        filter_flight = Flight.objects.create(
+            number="CD4321",
+            route=filter_route,
+            airplane=self.flight.airplane,
+            departure_time=self.flight.departure_time,
+            arrival_time=self.flight.arrival_time,
+        )
+
+        response = self.client.get(FLIGHT_URL, {"source": filter_source.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], filter_flight.pk)
+
+        response = self.client.get(
+            FLIGHT_URL, {"destination": filter_destination.id}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], filter_flight.pk)
+
+    def test_flight_list_departure_date_filter(self):
+        departure_date = "2024-12-06"
+        departure_time = datetime.strptime(
+            f"{departure_date} 11:15:00", "%Y-%m-%d %H:%M:%S"
+        )
+        filter_flight = Flight.objects.create(
+            number="CD4321",
+            route=self.flight.route,
+            airplane=self.flight.airplane,
+            departure_time=departure_time,
+            arrival_time=self.flight.arrival_time,
+        )
+
+        response = self.client.get(
+            FLIGHT_URL, {"departure_date": departure_date}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], filter_flight.pk)
+
+    def test_flight_list_arrival_date_filter(self):
+        arrival_date = "2024-12-07"
+        arrival_time = datetime.strptime(
+            f"{arrival_date} 15:15:00", "%Y-%m-%d %H:%M:%S"
+        )
+        filter_flight = Flight.objects.create(
+            number="CD4321",
+            route=self.flight.route,
+            airplane=self.flight.airplane,
+            departure_time=arrival_time,
+            arrival_time=self.flight.arrival_time,
+        )
+
+        response = self.client.get(
+            FLIGHT_URL, {"departure_date": arrival_date}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], filter_flight.pk)
