@@ -1,21 +1,24 @@
 from django.contrib.auth import get_user_model
+from django.db.models import F, Count
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from booking.tests.test_views import sample_user
-from flight_ops.models import Crew, Route
+from flight_ops.models import Crew, Route, Flight
 from flight_ops.serializers import (
     CrewSerializer,
     RouteListSerializer,
     RouteDetailSerializer,
-    RouteSerializer
+    RouteSerializer,
+    FlightListSerializer,
 )
 from flight_ops.tests.utils import sample_crew, sample_route
 
 CREW_URL = reverse("flight-ops:crew-list")
 ROUTE_URL = reverse("flight-ops:route-list")
+FLIGHT_URL = reverse("flight-ops:flight-list")
 
 
 def crew_detail_url(crew_id):
@@ -158,3 +161,27 @@ class AdminRouteAPITests(TestCase):
 
         response = self.client.post(ROUTE_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PublicFlightAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.flight = sample_flight()
+
+    def test_flight_list_with_seats_available(self):
+        Flight.objects.create(
+            number="CD4321",
+            route=self.flight.route,
+            airplane=self.flight.airplane,
+            departure_time=self.flight.departure_time,
+            arrival_time=self.flight.arrival_time
+        )
+        flights = Flight.objects.annotate(
+                seats_available=F("airplane__seats_in_row")
+                * F("airplane__rows") - Count("tickets")
+            )
+        serializer = FlightListSerializer(flights, many=True)
+
+        response = self.client.get(FLIGHT_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"], serializer.data)
