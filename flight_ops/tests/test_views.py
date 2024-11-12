@@ -32,6 +32,10 @@ def route_detail_url(route_id):
     return reverse("flight-ops:route-detail", args=[route_id])
 
 
+def flight_detail_url(flight_id):
+    return reverse("flight-ops:flight-detail", args=[flight_id])
+
+
 class PublicCrewAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -171,6 +175,14 @@ class PublicFlightAPITests(TestCase):
         self.client = APIClient()
         self.flight = sample_flight()
 
+        self.payload = {
+            "number": self.flight.number,
+            "route": self.flight.route_id,
+            "airplane": self.flight.airplane_id,
+            "departure_time": self.flight.departure_time,
+            "arrival_time": self.flight.arrival_time,
+        }
+
     def test_flight_list_with_seats_available(self):
         Flight.objects.create(
             number="CD4321",
@@ -261,3 +273,38 @@ class PublicFlightAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["id"], filter_flight.pk)
+
+    def test_flight_detail_without_crew(self):
+        response = self.client.get(flight_detail_url(self.flight.pk))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("crew", response.data)
+
+    def test_create_and_update_flight_forbidden_for_anon_users(self):
+        create_response = self.client.post(FLIGHT_URL, self.payload)
+        self.assertEqual(
+            create_response.status_code, status.HTTP_401_UNAUTHORIZED
+        )
+
+        put_response = self.client.put(
+            FLIGHT_URL, self.payload, **{"id": self.flight.id}
+        )
+        self.assertEqual(
+            put_response.status_code, status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_create_and_update_flight_forbidden_for_auth_users(self):
+        user = sample_user()
+        self.client.force_authenticate(user)
+
+        create_response = self.client.post(FLIGHT_URL, self.payload)
+        self.assertEqual(
+            create_response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
+        put_response = self.client.put(
+            FLIGHT_URL, self.payload, **{"id": self.flight.id}
+        )
+        self.assertEqual(
+            put_response.status_code, status.HTTP_403_FORBIDDEN
+        )
