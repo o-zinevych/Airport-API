@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -162,3 +163,8 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
 }
+
+# Testing configuration
+TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+if TESTING:
+  del REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
