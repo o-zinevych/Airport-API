@@ -49,17 +49,19 @@ class PublicAirplaneTypesAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
 
-    def test_create_airplane_type_forbidden(self):
-        user = get_user_model().objects.create_user(
-            email="test@test.com", password="test1234"
-        )
+    def test_create_and_update_airplane_type_forbidden(self):
+        user = sample_user()
         self.client.force_authenticate(user)
 
         payload = {
             "name": "Boeing 737-800",
         }
-        response = self.client.post(AIRPLANE_TYPE_URL, payload)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        create_response = self.client.post(AIRPLANE_TYPE_URL, payload)
+        self.assertEqual(create_response.status_code, status.HTTP_403_FORBIDDEN)
+        put_response = self.client.put(
+            airplane_type_detail_url(self.airplane_type.id), payload
+        )
+        self.assertEqual(put_response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class AdminAirplaneTypeAPITests(TestCase):
@@ -71,16 +73,24 @@ class AdminAirplaneTypeAPITests(TestCase):
         )
         self.client.force_authenticate(self.admin_user)
 
-    def test_create_airplane_type(self):
-        payload = {
-            "name": "Boeing 737-800",
+        self.airplane_type = sample_airplane_type()
+        self.payload = {
+            "name": "Boeing 1234",
         }
-        response = self.client.post(AIRPLANE_TYPE_URL, payload)
+
+    def test_create_airplane_type(self):
+        response = self.client.post(AIRPLANE_TYPE_URL, self.payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         airplane_type = AirplaneType.objects.get(pk=response.data["id"])
         serializer = AirplaneTypeSerializer(airplane_type)
         self.assertEqual(response.data, serializer.data)
+
+    def test_update_airplane_type(self):
+        response = self.client.put(
+            airplane_type_detail_url(self.airplane_type.id), self.payload
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class PublicAirplaneAPITests(TestCase):
@@ -104,7 +114,7 @@ class PublicAirplaneAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
 
-    def test_create_airplane_forbidden(self):
+    def test_create_and_update_airplane_forbidden(self):
         user = sample_user()
         self.client.force_authenticate(user)
 
@@ -114,8 +124,13 @@ class PublicAirplaneAPITests(TestCase):
             "seats_in_row": 6,
             "airplane_type": self.airplane_type.id,
         }
-        response = self.client.post(AIRPLANE_URL, payload)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        create_response = self.client.post(AIRPLANE_URL, payload)
+        self.assertEqual(create_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        put_response = self.client.put(
+            airplane_detail_url(self.airplane.id), payload
+        )
+        self.assertEqual(put_response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class AdminAirplaneAPITests(TestCase):
@@ -127,18 +142,25 @@ class AdminAirplaneAPITests(TestCase):
         )
         self.client.force_authenticate(self.admin_user)
 
-        self.airplane_type = sample_airplane_type()
-
-    def test_create_airplane_type(self):
-        payload = {
-            "name": "EI-EPC",
+        airplane_type = sample_airplane_type()
+        self.airplane = sample_airplane(airplane_type=airplane_type)
+        self.payload = {
+            "name": "Test Plane",
             "rows": 30,
             "seats_in_row": 6,
-            "airplane_type": self.airplane_type.id,
+            "airplane_type": airplane_type.id,
         }
-        response = self.client.post(AIRPLANE_URL, payload)
+
+    def test_create_airplane_type(self):
+        response = self.client.post(AIRPLANE_URL, self.payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         airplane = Airplane.objects.get(pk=response.data["id"])
         serializer = AirplaneSerializer(airplane)
         self.assertEqual(response.data, serializer.data)
+
+    def test_update_airplane_type(self):
+        response = self.client.put(
+            airplane_detail_url(self.airplane.id), self.payload
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
