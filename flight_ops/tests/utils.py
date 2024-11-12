@@ -21,18 +21,15 @@ def sample_route(**params):
     """
     Create a sample route with source and destination airports samples.
     """
-    try:
-        country = sample_country()
-        city = sample_city(country=country)
-        source = sample_airport(closest_big_city=city)
-        destination = sample_airport(name="Gatwick", closest_big_city=city)
-        defaults = {
-            "source": source,
-            "destination": destination,
-            "distance": 1150,
-        }
-    except IntegrityError:
-        defaults = {}
+    country = sample_country()
+    city = sample_city(country=country)
+    source = sample_airport(closest_big_city=city)
+    destination = sample_airport(name="Gatwick", closest_big_city=city)
+    defaults = {
+        "source": source,
+        "destination": destination,
+        "distance": 1150,
+    }
     defaults.update(params)
 
     return Route.objects.create(**defaults)
