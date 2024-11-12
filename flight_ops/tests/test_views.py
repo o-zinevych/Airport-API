@@ -308,3 +308,39 @@ class PublicFlightAPITests(TestCase):
         self.assertEqual(
             put_response.status_code, status.HTTP_403_FORBIDDEN
         )
+
+
+class AdminFlightAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_superuser(
+            email="test_admin@test.com", password="test1234"
+        )
+        self.client.force_authenticate(self.user)
+
+        self.flight = sample_flight()
+        self.flight.crew.add(sample_crew())
+        self.payload = {
+            "number": self.flight.number,
+            "route": self.flight.route_id,
+            "airplane": self.flight.airplane_id,
+            "departure_time": self.flight.departure_time,
+            "arrival_time": self.flight.arrival_time,
+            "crew": [crew.id for crew in self.flight.crew.all()],
+        }
+
+    def test_create_flight(self):
+        response = self.client.post(FLIGHT_URL, self.payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_update_flight(self):
+        response = self.client.put(
+            flight_detail_url(self.flight.id), self.payload
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_not_allowed(self):
+        response = self.client.delete(flight_detail_url(self.flight.id))
+        self.assertEqual(
+            response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED
+        )
