@@ -223,3 +223,25 @@ class AirportImageUploadTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         airport = Airport.objects.get(name="Name")
         self.assertFalse(airport.image)
+
+    def test_image_url_not_in_airport_list(self):
+        url = airport_image_upload_url(self.airport.id)
+        with NamedTemporaryFile(suffix=".jpg") as temp_jpg:
+            image = Image.new("RGB", (10, 10))
+            image.save(temp_jpg, format="JPEG")
+            temp_jpg.seek(0)
+            self.client.post(url, {"image": temp_jpg}, format="multipart")
+
+        response = self.client.get(AIRPORT_URL)
+        self.assertNotIn("image", response.data["results"][0])
+
+    def test_image_url_appears_in_airport_detail(self):
+        url = airport_image_upload_url(self.airport.id)
+        with NamedTemporaryFile(suffix=".jpg") as temp_jpg:
+            image = Image.new("RGB", (10, 10))
+            image.save(temp_jpg, format="JPEG")
+            temp_jpg.seek(0)
+            self.client.post(url, {"image": temp_jpg}, format="multipart")
+
+        response = self.client.get(airport_detail_url(self.airport.id))
+        self.assertIn("image", response.data)
