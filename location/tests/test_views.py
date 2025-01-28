@@ -1,3 +1,7 @@
+import os.path
+from tempfile import NamedTemporaryFile
+
+from PIL import Image
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -23,6 +27,9 @@ def city_detail_url(city_id):
 
 def airport_detail_url(airport_id):
     return reverse("location:airport-detail", args=[airport_id])
+
+def airport_image_upload_url(airport_id):
+    return reverse("location:airport-upload-image", args=[airport_id])
 
 
 class PublicCountryAPITests(TestCase):
@@ -158,3 +165,61 @@ class AdminAirportAPITests(TestCase):
     def test_create_airport(self):
         response = self.client.post(AIRPORT_URL, self.payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class AirportImageUploadTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = get_user_model().objects.create_superuser(
+            email="admin@admin.com", password="admin4321"
+        )
+        self.client.force_authenticate(user=self.admin_user)
+        self.country = sample_country()
+        self.city = sample_city(country=self.country)
+        self.airport = sample_airport(closest_big_city=self.city)
+
+    def tearDown(self):
+        self.airport.image.delete()
+
+    def test_upload_image_to_airport(self):
+        url = airport_image_upload_url(self.airport.id)
+        with NamedTemporaryFile(suffix=".jpg") as temp_jpg:
+            image = Image.new("RGB", (10, 10))
+            image.save(temp_jpg, format="JPEG")
+            temp_jpg.seek(0)
+            response = self.client.post(
+                url, {"image": temp_jpg}, format="multipart"
+            )
+        self.airport.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("image", response.data)
+        self.assertTrue(os.path.exists(self.airport.image.path))
+
+    def test_upload_non_image_bad_request(self):
+        response = self.client.post(
+            airport_image_upload_url(self.airport.id),
+            {"image": "not image"},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_upload_image_to_airport_list(self):
+        """Test that an airport is created but no image is uploaded"""
+        with NamedTemporaryFile(suffix=".jpg") as temp_jpg:
+            image = Image.new("RGB", (10, 10))
+            image.save(temp_jpg, format="JPEG")
+            temp_jpg.seek(0)
+            response = self.client.post(
+                AIRPORT_URL,
+                {
+                    "name": "Name",
+                    "closest_big_city": self.city.id,
+                    "image": temp_jpg,
+                }
+                , format="multipart"
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        airport = Airport.objects.get(name="Name")
+        self.assertFalse(airport.image)
