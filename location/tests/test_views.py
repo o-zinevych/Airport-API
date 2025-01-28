@@ -13,6 +13,7 @@ from location.serializers import (
     CountrySerializer,
     CityListSerializer,
     AirportListSerializer,
+    AirportDetailSerializer,
 )
 from location.tests.utils import sample_country, sample_city, sample_airport
 from user.tests.utils import sample_user
@@ -135,7 +136,7 @@ class PublicAirportAPITests(TestCase):
         self.assertEqual(response.data["results"], serializer.data)
 
     def test_airport_detail(self):
-        serializer = AirportListSerializer(self.airport)
+        serializer = AirportDetailSerializer(self.airport)
         response = self.client.get(airport_detail_url(self.airport.id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)

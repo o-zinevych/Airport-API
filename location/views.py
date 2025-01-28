@@ -10,6 +10,7 @@ from .serializers import (
     CityListSerializer,
     AirportSerializer,
     AirportListSerializer,
+    AirportDetailSerializer,
     AirportImageSerializer,
 )
 
@@ -35,8 +36,10 @@ class AirportViewSet(viewsets.ModelViewSet):
     )
 
     def get_serializer_class(self):
-        if self.action in ("list", "retrieve"):
+        if self.action == "list":
             return AirportListSerializer
+        if self.action == "retrieve":
+            return AirportDetailSerializer
         if self.action == "upload_image":
             return AirportImageSerializer
 
