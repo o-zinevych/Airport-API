@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+*.iml
+.DS_Store
+venv/
+**__pycache__/
+db.sqlite3
+media
+htmlcov
+.coverage
+Dockerfile
+docker-compose.yaml
+.git
+.gitignore
+.env
