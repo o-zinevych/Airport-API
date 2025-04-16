@@ -4,7 +4,7 @@ DRF project written to track and manage flight-related data
 
 ## Installation
 
-To set up this project, install PostgresSQL and run these commands:
+To set up this project, install PostgreSQL and run these commands:
 
 ```shell
 git clone https://github.com/o-zinevych/Airport-API.git
